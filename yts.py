@@ -2,13 +2,6 @@
 # AUTHORS: Khen Solomon Lethil (khensolomon@gmail.com)
 # CONTRIBUTORS: ??
 
-# Simple search
-# just type -> Movie Title/IMDb Code, Actor Name/IMDb Code, Director Name/IMDb Code
-# Advanced search
-# love genre=? quality=? minimum_rating=? sort_by=? order_by=? with_rt_ratings=? page=? limit=?
-
-
-
 import json
 import time
 import re
