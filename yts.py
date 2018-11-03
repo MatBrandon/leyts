@@ -1,4 +1,4 @@
-# VERSION: 1.0
+# VERSION: 2.0
 # AUTHORS: Khen Solomon Lethil (khensolomon@gmail.com)
 # CONTRIBUTORS: ??
 
@@ -19,7 +19,7 @@ from helpers import retrieve_url
 class yts(object):
     url = 'https://yts.am'
     name = 'YTS'
-    supported_categories = {'all': ''}
+    supported_categories = {'all': '', 'movies': 'Movie'}
 
     def search(self, keyword, cat='all'):
         base_url = "https://yts.am/api/v2/list_movies.json?%s"
@@ -38,7 +38,7 @@ class yts(object):
             keyword = re.sub(qualityRegex,"",keyword)
             parameter['quality'] = re.findall("=(.*)", quality[0])[0].strip()
 
-        minimum_ratingRegex = "(rating=.*[\s+|$]?)"
+        minimum_ratingRegex = "(minimum_rating=.*[\s+|$]?)"
         minimum_rating = re.findall(minimum_ratingRegex, keyword)
         if len(minimum_rating):
             keyword = re.sub(minimum_ratingRegex,"",keyword)
@@ -62,13 +62,13 @@ class yts(object):
             keyword = re.sub(with_rt_ratingsRegex,"",keyword)
             parameter['with_rt_ratings'] = re.findall("=(.*)", with_rt_ratings[0])[0].strip()
 
-        pageRegex = "(with_rt_ratings=.*[\s+|$]?)"
+        pageRegex = "(page=.*[\s+|$]?)"
         page = re.findall(pageRegex, keyword)
         if len(page):
             keyword = re.sub(pageRegex,"",keyword)
             parameter['page'] = re.findall("=(.*)", page[0])[0].strip()
 
-        limitRegex = "(with_rt_ratings=.*[\s+|$]?)"
+        limitRegex = "(limit=.*[\s+|$]?)"
         limit = re.findall(limitRegex, keyword)
         if len(limit):
             keyword = re.sub(limitRegex,"",keyword)
