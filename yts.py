@@ -1,6 +1,5 @@
-# VERSION: 3.0
+# VERSION: 3.1
 # AUTHORS: Khen Solomon Lethil (khensolomon@gmail.com)
-# CONTRIBUTORS: ??
 
 import json
 import time
@@ -12,7 +11,7 @@ except ImportError:
     # python2
     from urllib import urlencode, unquote, quote_plus
 
-# qBt
+# local
 from novaprinter import prettyPrinter
 from helpers import retrieve_url
 
@@ -76,7 +75,8 @@ class yts(object):
 
         query_term = re.sub(' +',' ',keyword).strip()
         if query_term:
-            parameter['query_term'] = query_term
+            if query_term !='%%':
+                parameter['query_term'] = query_term
 
         # get response json
         # query_term, genre, quality, minimum_rating, sort_ty, order_by, with_rt_ratings, page, limit
@@ -103,7 +103,7 @@ class yts(object):
                 res = {'link': magnet.format(Hashs=torrent['hash'],
                                             Downloads=urlencode({'dn': movies['title']}),
                                             Trackers='&'.join(map(lambda x: 'tr='+quote_plus(x.strip()), tr_tracker))),
-                       'name': '{n} ({y}) [{q}]'.format(n=movies['title'], y=movies['year'], q=torrent['quality']),
+                       'name': '{n} ({y}) [{q}]-[{i}]'.format(n=movies['title'], y=movies['year'], q=torrent['quality'], i=self.name),
                        'size': torrent['size'],
                        'seeds': torrent['seeds'],
                        'leech': torrent['peers'],
@@ -111,3 +111,6 @@ class yts(object):
                        # 'engine_url': self.url,
                        'desc_link': movies['url']}
                 prettyPrinter(res)
+
+if __name__=="__main__":
+    yts.search(yts,'love')

@@ -10,7 +10,7 @@ except ImportError:
     from urllib import urlencode, unquote, quote_plus
 
 # keyword = "love genre=Action quality=1080p minimum_rating=2.0 sort_by=a order_by=b with_rt_ratings=0 page=1 limit=30"
-keyword = "love   genre=Action quality=1080p minimum_rating=2.0"
+keyword = "%%   genre=Action quality=1080p minimum_rating=2.0"
 # keyword = "love genre=Loves"
 # keyword = "love genre=Loves as"
 
@@ -75,11 +75,12 @@ if len(limit):
 
 query_term = re.sub(' +',' ',keyword).strip()
 if query_term:
-    parameter['query_term'] = query_term
+    if query_term !='%%':
+        parameter['query_term'] = query_term
 
 print(parameter)
 
-abc = map(lambda x: 'tr='+quote_plus(x.strip()), tr_tracker)
+# abc = map(lambda x: 'tr='+quote_plus(x.strip()), tr_tracker)
 
 
 
