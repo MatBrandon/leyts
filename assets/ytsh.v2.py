@@ -1,18 +1,17 @@
-# VERSION: 3.2
+# VERSION: 1.0
 # AUTHORS: Khen Solomon Lethil (khensolomon@gmail.com)
 
 import json
 import time
 import re
-import math
 try:
     # python3
     from urllib.parse import urlencode, unquote, quote_plus
     from html.parser import HTMLParser
 except ImportError:
     # python2
-    from urllib import urlencode, unquote, quote_plus
     from HTMLParser import HTMLParser
+    from urllib import urlencode, unquote, quote_plus
 
 # local
 from novaprinter import prettyPrinter
@@ -25,6 +24,7 @@ class yts(object):
     supported_categories = {'all': 'All', 'movies': 'Movie'}
 
     def done(res={}):
+        # prettyPrinter(res)
         if res:
             print(res['name'])
         else:
@@ -35,11 +35,11 @@ class yts(object):
         api_url_browse = self.url+"/browse-movies/{query_term}/{quality}/{genre}/{minimum_rating}/{order_by}?%s"
         api_url_detail = self.url+"/api/v2/movie_details.json?%s"
         parameter = {
-            'query_term':'',
-            'quality':'',
-            'genre':'',
-            'minimum_rating':'',
-            'order_by':''}
+            'query_term':'0',
+            'quality':'0',
+            'genre':'0',
+            'minimum_rating':'0',
+            'order_by':'0'}
 
         keyword = unquote(keyword)
 
@@ -95,8 +95,8 @@ class yts(object):
         if query_term:
             if query_term !='%%':
                 parameter['query_term'] = query_term
-                # parameter['query_term'] = quote_plus(query_term)
 
+        # self.done({'name':'what'})
         tr_tracker = ['udp://open.demonii.com:1337/announce',
                     'udp://tracker.openbittorrent.com:80',
                     'udp://tracker.coppersurfer.tk:6969',
@@ -107,77 +107,66 @@ class yts(object):
                     'udp://tracker.leechers-paradise.org:6969']
         magnet = "magnet:?xt=urn:btih:{Hashs}&{Downloads}&{Trackers}"
 
-        data = retrieve_url(api_url_list % urlencode(parameter))
-        j = json.loads(data)
+        api_url_list_response = retrieve_url(api_url_list % urlencode(parameter))
+        j = json.loads(api_url_list_response)
         if j['data']['movie_count']:
-            result_page = str(j['data']['page_number'])+'of'+str(math.ceil(j['data']['movie_count'] / j['data']['limit']))
+            print('from: api_url_list')
             for movies in j['data']['movies']:
                 for torrent in movies['torrents']:
                     res = {'link': magnet.format(Hashs=torrent['hash'],
                                                 Downloads=urlencode({'dn': movies['title']}),
                                                 Trackers='&'.join(map(lambda x: 'tr='+quote_plus(x.strip()), tr_tracker))),
-                           'name': '{n} ({y}) [{q}]-[{p}]-[{i}]'.format(n=movies['title'], y=movies['year'], q=torrent['quality'], p=result_page, i=self.name),
+                           'name': '{n} ({y}) [{q}]-[{i}]'.format(n=movies['title'], y=movies['year'], q=torrent['quality'], i=self.name),
                            'size': torrent['size'],
                            'seeds': torrent['seeds'],
                            'leech': torrent['peers'],
                            'engine_url': 'IMDB:[{rating}], Genre:[{genres}]'.format(rating=movies['rating'], genres=', '.join(movies['genres'])),
                            # 'engine_url': self.url,
                            'desc_link': movies['url']}
-                    prettyPrinter(res)
+                    # prettyPrinter(res)
+                    # print(j)
+                    self.done(res)
         elif api_url_browse:
-            if not parameter['query_term']:
-                parameter['query_term'] = '0'
-            if not parameter['quality']:
-                parameter['quality'] = 'all'
-            if not parameter['genre']:
-                parameter['genre'] = 'all'
-            if not parameter['minimum_rating']:
-                parameter['minimum_rating'] = '0'
-            if not parameter['order_by']:
-                parameter['order_by'] = 'latest'
+            print('from: api_url_browse')
             search_url = api_url_browse.format(query_term=parameter['query_term'],
                                         quality=parameter['quality'],
                                         genre=parameter['genre'],
                                         minimum_rating=parameter['minimum_rating'],
                                         order_by=parameter['order_by'])
 
-            if 'page' in parameter and parameter['page'] > '1':
-                search_url = search_url.replace('%s','page='+parameter['page'])
-            else:
-                search_url = search_url.replace('?%s','')
             data = retrieve_url(search_url)
             data = re.sub("\s\s+", "", data).replace('\n', '').replace('\r', '')
 
             data_container = re.findall('<div class="browse-content"><div class="container">.*?<section><div class="row">(.*?)</div></section>.*?</div></div>', data)
-            result_page = re.findall('<li class="pagination-bordered">(.*?)</li>', data)[0] # 1 of 5
-            if result_page:
-                result_page = re.sub(' +','',result_page).strip()
-            else:
-                result_page = '?'
-
             data_movie = re.findall('<div class=".?browse-movie-wrap.*?">.*?</div></div></div>', data_container[0])
+
             for hM in data_movie:
                 movie_link = re.findall('<a href="(.*?)" class="browse-movie-link">.*?</a>', hM)[0]
+                # main-content container row movie-info
                 response_detail = retrieve_url(movie_link)
                 response_detail = re.sub("\s\s+", "", response_detail).replace('\n', '').replace('\r', '')
 
                 movie_id = re.findall('data-movie-id="(\d+)"', response_detail)[0]
                 if movie_id:
-                    api_url_detail_response = retrieve_url(api_url_detail % urlencode({'movie_id':movie_id}))
-                    j = json.loads(api_url_detail_response)
+                    api_detail = retrieve_url('https://yts.am/api/v2/movie_details.json?movie_id='+movie_id)
+                    j = json.loads(api_detail)
                     movies = j['data']['movie']
                     for torrent in movies['torrents']:
                         res = {'link': magnet.format(Hashs=torrent['hash'],
                                                     Downloads=urlencode({'dn': movies['title']}),
                                                     Trackers='&'.join(map(lambda x: 'tr='+quote_plus(x.strip()), tr_tracker))),
-                               'name': '{n} ({y}) [{q}]-[{p}]-[{i}]'.format(n=movies['title'], y=movies['year'], q=torrent['quality'], p=result_page,i='AM'),
+                               'name': '{n} ({y}) [{q}]'.format(n=movies['title'], y=movies['year'], q=torrent['quality'], i=self.name),
                                'size': torrent['size'],
                                'seeds': torrent['seeds'],
                                'leech': torrent['peers'],
                                'engine_url': 'IMDB:[{rating}], Genre:[{genres}]'.format(rating=movies['rating'], genres=', '.join(movies['genres'])),
+                               # 'engine_url': self.url,
                                'desc_link': movies['url']}
-                        prettyPrinter(res)
+                        # prettyPrinter(res)
+                        # print(res['name'])
+                        self.done(res)
                 else:
+                    self.done()
                     movie_title = re.findall('<a.*?class="browse-movie-title".*?>(.*?)</a>', hM)[0]
                     movie_year = re.findall('<div.?class="browse-movie-year".*?>(.*?)</div>', hM)[0]
 
@@ -187,12 +176,61 @@ class yts(object):
                     movie_genre = re.findall('<figcaption class=".*?">.*?(<h4>.*</h4>).*?</figcaption>', hM)[0]
                     movie_genre = re.findall('<h4>(.*?)</h4>', movie_genre)
                     # print(movie_title,movie_link,movie_year,movie_rate,movie_genre)
-                    self.done()
         else:
             self.done()
 
+
+
+        # search_url = api_url_browse.format(query_term=parameter['query_term'],
+        #                             quality=parameter['quality'],
+        #                             genre=parameter['genre'],
+        #                             minimum_rating=parameter['minimum_rating'],
+        #                             order_by=parameter['order_by'])
+        #
+        # response_html = retrieve_url(search_url)
+
+
+        # response_html = re.sub("\s\s+", "", response_html)
+        # response_html = response_html.replace('\n', '').replace('\r', '')
+        # response_container = re.findall('<div class="browse-content"><div class="container">.*?<section><div class="row">(.*?)</div></section>.*?</div></div>', response_html)
+        # response_section_row_movie = re.findall('<div class=".?browse-movie-wrap.*?">.*?</div></div></div>', response_container[0])
+        #
+        # for hM in response_section_row_movie:
+        #     movie_link = re.findall('<a href="(.*?)" class="browse-movie-link">.*?</a>', hM)[0]
+        #     # main-content container row movie-info
+        #     response_detail = retrieve_url(movie_link)
+        #     response_detail = re.sub("\s\s+", "", response_detail).replace('\n', '').replace('\r', '')
+        #
+        #     movie_id = re.findall('data-movie-id="(\d+)"', response_detail)[0]
+        #     if movie_id:
+        #         api_detail = retrieve_url('https://yts.am/api/v2/movie_details.json?movie_id='+movie_id)
+        #         j = json.loads(api_detail)
+        #         movies = j['data']['movie']
+        #         for torrent in movies['torrents']:
+        #             res = {'link': magnet.format(Hashs=torrent['hash'],
+        #                                         Downloads=urlencode({'dn': movies['title']}),
+        #                                         Trackers='&'.join(map(lambda x: 'tr='+quote_plus(x.strip()), tr_tracker))),
+        #                    'name': '{n} ({y}) [{q}]'.format(n=movies['title'], y=movies['year'], q=torrent['quality'], i=self.name),
+        #                    'size': torrent['size'],
+        #                    'seeds': torrent['seeds'],
+        #                    'leech': torrent['peers'],
+        #                    'engine_url': 'IMDB:[{rating}], Genre:[{genres}]'.format(rating=movies['rating'], genres=', '.join(movies['genres'])),
+        #                    # 'engine_url': self.url,
+        #                    'desc_link': movies['url']}
+        #             # prettyPrinter(res)
+        #             print(res['name'])
+        #     else:
+        #         print('nothing')
+        #         movie_title = re.findall('<a.*?class="browse-movie-title".*?>(.*?)</a>', hM)[0]
+        #         movie_year = re.findall('<div.?class="browse-movie-year".*?>(.*?)</div>', hM)[0]
+        #
+        #         movie_rate = re.findall('<h4.?class="rating".*?>(.*?)</h4>', hM)[0]
+        #         movie_rate = movie_rate.split('/')[0]
+        #
+        #         movie_genre = re.findall('<figcaption class=".*?">.*?(<h4>.*</h4>).*?</figcaption>', hM)[0]
+        #         movie_genre = re.findall('<h4>(.*?)</h4>', movie_genre)
+        #         # print(movie_title,movie_link,movie_year,movie_rate,movie_genre)
+
 if __name__=="__main__":
-    # Scarlett Johansson
-    # yts.search(yts,'Mandy Patinkin page=2')
     # yts.search(yts,'Shekhar Kapur')
     yts.search(yts,'love')

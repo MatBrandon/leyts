@@ -1,55 +1,24 @@
-# VERSION: 1.0
+# VERSION: 3.1
 # AUTHORS: Khen Solomon Lethil (khensolomon@gmail.com)
-# CONTRIBUTORS: ??
-
-# Simple search
-# just type -> Movie Title/IMDb Code, Actor Name/IMDb Code, Director Name/IMDb Code
-# Advanced search
-# love genre=? quality=? minimum_rating=? sort_by=? order_by=? with_rt_ratings=? page=? limit=?
-
-# LICENSING INFORMATION
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-#
-#    * Redistributions of source code must retain the above copyright notice,
-#      this list of conditions and the following disclaimer.
-#    * Redistributions in binary form must reproduce the above copyright
-#      notice, this list of conditions and the following disclaimer in the
-#      documentation and/or other materials provided with the distribution.
-#    * Neither the name of the author nor the names of its contributors may be
-#      used to endorse or promote products derived from this software without
-#      specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
 
 import json
 import time
 import re
 try:
     # python3
-    from urllib.parse import urlencode, unquote
+    from urllib.parse import urlencode, unquote, quote_plus
 except ImportError:
     # python2
-    from urllib import urlencode, unquote
+    from urllib import urlencode, unquote, quote_plus
 
-# qBt
+# local
 from novaprinter import prettyPrinter
 from helpers import retrieve_url
 
 class yts(object):
     url = 'https://yts.am'
     name = 'YTS'
-    supported_categories = {'all': ''}
+    supported_categories = {'all': 'All', 'movies': 'Movie'}
 
     def search(self, keyword, cat='all'):
         base_url = "https://yts.am/api/v2/list_movies.json?%s"
@@ -62,57 +31,58 @@ class yts(object):
             keyword = re.sub(genreRegex,"",keyword)
             parameter['genre'] = re.findall("=(.*)", genre[0])[0].strip()
 
-        qualityRegex = "(quality=\w+[\s+|$]?)"
-        quality = re.findall(qualityRegex, keyword)
+        quality_regex = "(quality=\w+[\s+|$]?)"
+        quality = re.findall(quality_regex, keyword)
         if len(quality):
-            keyword = re.sub(qualityRegex,"",keyword)
+            keyword = re.sub(quality_regex,"",keyword)
             parameter['quality'] = re.findall("=(.*)", quality[0])[0].strip()
 
-        minimum_ratingRegex = "(rating=.*[\s+|$]?)"
-        minimum_rating = re.findall(minimum_ratingRegex, keyword)
+        minimum_rating_regex = "(minimum_rating=?[0-9]*[.]?[0-9]+[\s+|$]?)"
+        minimum_rating = re.findall(minimum_rating_regex, keyword)
         if len(minimum_rating):
-            keyword = re.sub(minimum_ratingRegex,"",keyword)
+            keyword = re.sub(minimum_rating_regex,"",keyword)
             parameter['minimum_rating'] = re.findall("=(.*)", minimum_rating[0])[0].strip()
 
-        sortRegex = "(sort_by=.*[\s+|$]?)"
-        sort_by = re.findall(sortRegex, keyword)
+        sort_by_regex = "(sort_by=\w+[\s+|$]?)"
+        sort_by = re.findall(sort_by_regex, keyword)
         if len(sort_by):
-            keyword = re.sub(sortRegex,"",keyword)
+            keyword = re.sub(sort_by_regex,"",keyword)
             parameter['sort_by'] = re.findall("=(.*)", sort_by[0])[0].strip()
 
-        orderRegex = "(order_by=.*[\s+|$]?)"
-        order_by = re.findall(orderRegex, keyword)
+        order_by_regex = "(order_by=\w+[\s+|$]?)"
+        order_by = re.findall(order_by_regex, keyword)
         if len(order_by):
-            keyword = re.sub(orderRegex,"",keyword)
+            keyword = re.sub(order_by_regex,"",keyword)
             parameter['order_by'] = re.findall("=(.*)", order_by[0])[0].strip()
 
-        with_rt_ratingsRegex = "(with_rt_ratings=.*[\s+|$]?)"
-        with_rt_ratings = re.findall(with_rt_ratingsRegex, keyword)
-        if len(order_by):
-            keyword = re.sub(with_rt_ratingsRegex,"",keyword)
+        with_rt_ratings_regex = "(with_rt_ratings=\w+[\s+|$]?)"
+        with_rt_ratings = re.findall(with_rt_ratings_regex, keyword)
+        if len(with_rt_ratings):
+            keyword = re.sub(with_rt_ratings_regex,"",keyword)
             parameter['with_rt_ratings'] = re.findall("=(.*)", with_rt_ratings[0])[0].strip()
 
-        pageRegex = "(with_rt_ratings=.*[\s+|$]?)"
-        page = re.findall(pageRegex, keyword)
+        page_regex = "(page=\w+[\s+|$]?)"
+        page = re.findall(page_regex, keyword)
         if len(page):
-            keyword = re.sub(pageRegex,"",keyword)
+            keyword = re.sub(page_regex,"",keyword)
             parameter['page'] = re.findall("=(.*)", page[0])[0].strip()
 
-        limitRegex = "(with_rt_ratings=.*[\s+|$]?)"
-        limit = re.findall(limitRegex, keyword)
+        limit_regex = "(limit=.*[\s+|$]?)"
+        limit = re.findall(limit_regex, keyword)
         if len(limit):
-            keyword = re.sub(limitRegex,"",keyword)
+            keyword = re.sub(limit_regex,"",keyword)
             parameter['limit'] = re.findall("=(.*)", limit[0])[0].strip()
 
         query_term = re.sub(' +',' ',keyword).strip()
         if query_term:
-            parameter['query_term'] = query_term
+            if query_term !='%%':
+                parameter['query_term'] = query_term
 
         # get response json
         # query_term, genre, quality, minimum_rating, sort_ty, order_by, with_rt_ratings, page, limit
         # keyword = unquote(keyword)
         # category_genre = self.supported_categories[cat]
-        # params = urlencode({'query_term': keyword})
+        # parameter = urlencode({'query_term': keyword})
         response = retrieve_url(base_url % urlencode(parameter))
         j = json.loads(response)
 
@@ -126,12 +96,14 @@ class yts(object):
                     'udp://p4p.arenabg.com:1337',
                     'udp://tracker.leechers-paradise.org:6969']
 
-        magnet = "magnet:?xt=urn:btih:{Hashs}&{Downloads}&tr={Trackers}"
+        magnet = "magnet:?xt=urn:btih:{Hashs}&{Downloads}&{Trackers}"
 
         for movies in j['data']['movies']:
             for torrent in movies['torrents']:
-                res = {'link': magnet.format(Hashs=torrent['hash'], Downloads=urlencode({'dn': movies['title']}), Trackers='&tr='.join(tr_tracker)),
-                       'name': '{n} ({y}) [{q}]'.format(n=movies['title'], y=movies['year'], q=torrent['quality']),
+                res = {'link': magnet.format(Hashs=torrent['hash'],
+                                            Downloads=urlencode({'dn': movies['title']}),
+                                            Trackers='&'.join(map(lambda x: 'tr='+quote_plus(x.strip()), tr_tracker))),
+                       'name': '{n} ({y}) [{q}]-[{i}]'.format(n=movies['title'], y=movies['year'], q=torrent['quality'], i=self.name),
                        'size': torrent['size'],
                        'seeds': torrent['seeds'],
                        'leech': torrent['peers'],
@@ -139,3 +111,6 @@ class yts(object):
                        # 'engine_url': self.url,
                        'desc_link': movies['url']}
                 prettyPrinter(res)
+
+if __name__=="__main__":
+    yts.search(yts,'love')
