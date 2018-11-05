@@ -1,7 +1,9 @@
 /assets/ export-ignore
-/test.py export-ignore
-/*.py export-ignore
-!yts.py
+/test.* export-ignore
+/helpers.* export-ignore
+/sgmllib3.* export-ignore
+/socks.* export-ignore
+/nova*.* export-ignore
 
 .editorconfig export-ignore
 .gitattributes export-ignore
