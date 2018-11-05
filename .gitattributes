@@ -1,6 +1,7 @@
-assets/ export-ignore
+/assets/ export-ignore
+/test.py export-ignore
 /*.py export-ignore
-!yts.py export-ignore
+!yts.py
 
 .editorconfig export-ignore
 .gitattributes export-ignore
