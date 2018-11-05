@@ -1,9 +1,9 @@
-# leyts
+# leyts **v3.3**
 
 ## qBittorrent -> search plugin
 
 # How do I install?
-Insert this url in `Searh plugins` -> `install a new one` -> `web link`
+Insert this url in `Search plugins` -> `install a new one` -> `web link`
 
 ```
 https://raw.githubusercontent.com/khensolomon/leyts/master/yts.py
