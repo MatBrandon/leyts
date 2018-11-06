@@ -35,7 +35,7 @@ class yts(object):
                            'leech': torrent['peers'],
                            'engine_url': 'IMDB:{rating}, [{genres}]'.format(rating=movies['rating'], genres=', '.join(movies['genres'])),
                            'desc_link': movies['url']}
-                    job.urlResponse(res)
+                    job.done(res)
         elif job.supported_browse_movies:
             urlPath=job.supported_browse_params
             for i in urlPath:
@@ -71,7 +71,7 @@ class yts(object):
                                'leech': torrent['peers'],
                                'engine_url': 'IMDB:{rating}, [{genres}]'.format(rating=movies['rating'], genres=', '.join(movies['genres'])),
                                'desc_link': movies['url']}
-                        job.urlResponse(res)
+                        job.done(res)
                 else:
                     # TODO: ??
                     movie_title = re.findall('<a.*?class="browse-movie-title".*?>(.*?)</a>', hM)[0]
@@ -83,9 +83,9 @@ class yts(object):
                     movie_genre = re.findall('<figcaption class=".*?">.*?(<h4>.*</h4>).*?</figcaption>', hM)[0]
                     movie_genre = re.findall('<h4>(.*?)</h4>', movie_genre)
                     # print(movie_title,movie_link,movie_year,movie_rate,movie_genre)
-                    job.urlResponse()
+                    job.done()
         else:
-            job.urlResponse()
+            job.done()
 
 class scriptive(object):
     supported_browse_movies = 'browse-movies'
@@ -142,7 +142,7 @@ class scriptive(object):
                 params['query_term'] = query_term # quote_plus(query_term)
         return params
 
-    def urlResponse(self,res={}):
+    def done(self,res={}):
         if res:
             # print(res['name'])
             prettyPrinter(res)
