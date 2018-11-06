@@ -25,11 +25,11 @@ class yts(object):
         data = retrieve_url(url)
         j = json.loads(data)
         if j['data']['movie_count']:
-            result_page = str(j['data']['page_number'])+'of'+str(math.ceil(j['data']['movie_count'] / j['data']['limit']))
+            page_of = '{}of{}'.format(j['data']['page_number'],int(math.ceil(int(j['data']['movie_count']) / int(j['data']['limit']))))
             for movies in j['data']['movies']:
                 for torrent in movies['torrents']:
                     res = {'link':job.magnetBuilder(torrent['hash'],movies['title']),
-                           'name': '{n} ({y}) [{q}]-[{p}]-[{i}]'.format(n=movies['title'], y=movies['year'], q=torrent['quality'], p=result_page, i=self.name),
+                           'name': '{n} ({y}) [{q}]-[{p}]-[{i}]'.format(n=movies['title'], y=movies['year'], q=torrent['quality'], p=page_of, i=self.name),
                            'size': torrent['size'],
                            'seeds': torrent['seeds'],
                            'leech': torrent['peers'],
@@ -49,8 +49,8 @@ class yts(object):
             data = re.sub("\s\s+", "", data).replace('\n', '').replace('\r', '')
 
             data_container = re.findall('<div class="browse-content"><div class="container">.*?<section><div class="row">(.*?)</div></section>.*?</div></div>', data)
-            result_page = re.findall('<li class="pagination-bordered">(.*?)</li>', data)[0] # 1 of 5
-            result_page = result_page and re.sub(' +','',result_page).strip() or '?'
+            page_of = re.findall('<li class="pagination-bordered">(.*?)</li>', data)[0] # 1 of 5
+            page_of = page_of and re.sub(' +','',page_of).strip() or '?'
 
             data_movie = re.findall('<div class=".?browse-movie-wrap.*?">.*?</div></div></div>', data_container[0])
             for hM in data_movie:
@@ -65,7 +65,7 @@ class yts(object):
                     movies = j['data']['movie']
                     for torrent in movies['torrents']:
                         res = {'link':job.magnetBuilder(torrent['hash'],movies['title']),
-                               'name': '{n} ({y}) [{q}]-[{p}]-[{i}]'.format(n=movies['title'], y=movies['year'], q=torrent['quality'], p=result_page,i=self.name[:-1]),
+                               'name': '{n} ({y}) [{q}]-[{p}]-[{i}]'.format(n=movies['title'], y=movies['year'], q=torrent['quality'], p=page_of,i=self.name[:-1]),
                                'size': torrent['size'],
                                'seeds': torrent['seeds'],
                                'leech': torrent['peers'],
