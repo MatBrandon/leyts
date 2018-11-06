@@ -1,4 +1,4 @@
-# leyts **v3.3**
+# leyts `v3.5`
 
 ## qBittorrent -> search plugin
 
@@ -18,7 +18,7 @@ https://raw.githubusercontent.com/khensolomon/leyts/master/yts.py
 
 ```shell
 #love genre=? quality=? minimum_rating=? sort_by=? order_by=? with_rt_ratings=? page=? limit=?
-love genre=Action quality=1080p minimum_rating=2.0 sort_by=a order_by=b with_rt_ratings=0 page=1 limit=30
+love genre=Action quality=1080p minimum_rating=2 sort_by=latest order_by=desc with_rt_ratings=1 page=1 limit=30
 ```
 
 > extract the Latest

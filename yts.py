@@ -1,14 +1,12 @@
-# VERSION: 3.4
+# VERSION: 3.5
 # AUTHORS: Khen Solomon Lethil (khensolomon@gmail.com)
-import json, time, re, math
-try:
-    # python3
+import json, re, math
+try: # python3
     from urllib.parse import urlencode, unquote, quote_plus
-    from html.parser import HTMLParser
-except ImportError:
-    # python2
+    #from html.parser import HTMLParser
+except ImportError: # python2
     from urllib import urlencode, unquote, quote_plus
-    from HTMLParser import HTMLParser
+    #from HTMLParser import HTMLParser
 
 # local
 from novaprinter import prettyPrinter
@@ -20,68 +18,9 @@ class yts(object):
     supported_categories = {'all': 'All', 'movies': 'Movie'}
 
     def search(self, keyword, cat='all'):
-        params = {}
-        keyword = unquote(keyword)
-
-        genre_regex = "(genre=\w+[\s+|$]?)"
-        genre_param = re.findall(genre_regex, keyword)
-        if len(genre_param):
-            keyword = re.sub(genre_regex,"",keyword)
-            params['genre'] = re.findall("=(.*)", genre_param[0])[0].strip()
-
-        quality_regex = "(quality=\w+[\s+|$]?)"
-        quality_param  = re.findall(quality_regex, keyword)
-        if len(quality_param):
-            keyword = re.sub(quality_regex,"",keyword)
-            params['quality'] = re.findall("=(.*)", quality_param[0])[0].strip()
-
-        minimum_rating_regex = "(minimum_rating=?[0-9]*[.]?[0-9]+[\s+|$]?)"
-        minimum_rating_param = re.findall(minimum_rating_regex, keyword)
-        if len(minimum_rating_param):
-            keyword = re.sub(minimum_rating_regex,"",keyword)
-            params['minimum_rating'] = re.findall("=(.*)", minimum_rating_param[0])[0].strip()
-
-        sort_by_regex = "(sort_by=\w+[\s+|$]?)"
-        sort_by_param = re.findall(sort_by_regex, keyword)
-        if len(sort_by_param):
-            keyword = re.sub(sort_by_regex,"",keyword)
-            params['sort_by'] = re.findall("=(.*)", sort_by_param[0])[0].strip()
-
-        order_by_regex = "(order_by=\w+[\s+|$]?)"
-        order_by_param = re.findall(order_by_regex, keyword)
-        if len(order_by_param):
-            keyword = re.sub(order_by_regex,"",keyword)
-            params['order_by'] = re.findall("=(.*)", order_by_param[0])[0].strip()
-
-        with_rt_ratings_regex = "(with_rt_ratings=\w+[\s+|$]?)"
-        with_rt_ratings_param = re.findall(with_rt_ratings_regex, keyword)
-        if len(with_rt_ratings_param):
-            keyword = re.sub(with_rt_ratings_regex,"",keyword)
-            params['with_rt_ratings'] = re.findall("=(.*)", with_rt_ratings_param[0])[0].strip()
-
-        page_regex = "(page=\w+[\s+|$]?)"
-        page_param = re.findall(page_regex, keyword)
-        if len(page_param):
-            keyword = re.sub(page_regex,"",keyword)
-            page_param = re.findall("=(.*)", page_param[0])[0].strip()
-            if page_param > '1':
-                params['page'] = page_param
-
-        limit_regex = "(limit=.*[\s+|$]?)"
-        limit_param = re.findall(limit_regex, keyword)
-        if len(limit_param):
-            keyword = re.sub(limit_regex,"",keyword)
-            limit_param = re.findall("=(.*)", limit_param[0])[0].strip()
-            if limit_param > '1':
-                params['limit'] = limit_param
-
-        query_term_param = re.sub(' +',' ',keyword).strip()
-        if query_term_param:
-            if query_term_param !='%%':
-                params['query_term'] = query_term_param
-                # params['query_term'] = quote_plus(query_term_param)
-
         job = scriptive()
+        params = job.paramBuilder(unquote(keyword))
+
         url = job.urlBuilder(self.url,['api', 'v2', 'list_movies.json'],params)
         data = retrieve_url(url)
         j = json.loads(data)
@@ -98,7 +37,7 @@ class yts(object):
                            'desc_link': movies['url']}
                     job.urlResponse(res)
         elif job.supported_browse_movies:
-            urlPath={'query_term':'0', 'quality':'all','genre':'all','minimum_rating':'0','sort_by':'latest'}
+            urlPath=job.supported_browse_params
             for i in urlPath:
                 if i in params:
                     urlPath[i]=params[i]
@@ -134,6 +73,7 @@ class yts(object):
                                'desc_link': movies['url']}
                         job.urlResponse(res)
                 else:
+                    # TODO: ??
                     movie_title = re.findall('<a.*?class="browse-movie-title".*?>(.*?)</a>', hM)[0]
                     movie_year = re.findall('<div.?class="browse-movie-year".*?>(.*?)</div>', hM)[0]
 
@@ -149,14 +89,26 @@ class yts(object):
 
 class scriptive(object):
     supported_browse_movies = 'browse-movies'
+    supported_browse_params = {'query_term':'0', 'quality':'all','genre':'all','minimum_rating':'0','sort_by':'latest'}
+    default_params = {
+        'genre':{'x':'(term=\w+[\s+|$]?)'},
+        'quality':{'x':'(term=\w+[\s+|$]?)'},
+        'minimum_rating':{'x':'(term=?[0-9]*[.]?[0-9]+[\s+|$]?)'},
+        'sort_by':{'x':'(term=\w+[\s+|$]?)'},
+        'order_by':{'x':'(term=\w+[\s+|$]?)'},
+        'with_rt_ratings':{'x':'(term=\w+[\s+|$]?)'},
+        'page':{'x':'(term=\w+[\s+|$]?)','value':'1'},
+        'limit':{'x':'(term=.*[\s+|$]?)','value':'1'},
+        'query_term':{'x':'(term=.*[\s+|$]?)','value':'%%'}}
+
     tracker = ['udp://open.demonii.com:1337/announce',
-            'udp://tracker.openbittorrent.com:80',
-            'udp://tracker.coppersurfer.tk:6969',
-            'udp://glotorrents.pw:6969/announce',
-            'udp://tracker.opentrackr.org:1337/announce',
-            'udp://torrent.gresille.org:80/announce',
-            'udp://p4p.arenabg.com:1337',
-            'udp://tracker.leechers-paradise.org:6969']
+        'udp://tracker.openbittorrent.com:80',
+        'udp://tracker.coppersurfer.tk:6969',
+        'udp://glotorrents.pw:6969/announce',
+        'udp://tracker.opentrackr.org:1337/announce',
+        'udp://torrent.gresille.org:80/announce',
+        'udp://p4p.arenabg.com:1337',
+        'udp://tracker.leechers-paradise.org:6969']
 
     def magnetBuilder(self,hash, name):
         return "magnet:?xt=urn:btih:{}&{}&{}".format(hash,urlencode({'dn': name}),'&'.join(map(lambda x: 'tr='+quote_plus(x.strip()), self.tracker)))
@@ -168,15 +120,40 @@ class scriptive(object):
             url = '{}?{}'.format(url, urlencode(param))
         return url
 
+    def paramBuilder(self, query_term):
+        params = {}
+        for name in self.default_params:
+            o = self.default_params[name]
+            regex = o['x'].replace('term',name)
+            val  = re.findall(regex, query_term)
+            if len(val):
+                query_term = re.sub(regex,"",query_term)
+                val = re.findall("=(.*)", val[0])[0].strip()
+                if 'value' in o and val != o['value']:
+                    """ limit > 1, page > 1, query_term != '%%' """
+                    params[name] = val
+                else:
+                    params[name] = val
+            else:
+                """ default value, if required """
+        query_term = re.sub(' +',' ',query_term).strip()
+        if query_term:
+            if query_term != self.default_params['query_term']['value']:
+                params['query_term'] = query_term # quote_plus(query_term)
+        return params
+
     def urlResponse(self,res={}):
         if res:
             # print(res['name'])
             prettyPrinter(res)
         else:
-            print('none')
+            """ None """
 
 if __name__=="__main__":
+    """ debug """
     # Scarlett Johansson
+    # yts.search(yts,'love genre=Action quality=1080p sort_by=latest  order_by=desc with_rt_ratings=Yes page=2 limit=2')
+    yts.search(yts,'Scarlett Johansson page=2')
     # yts.search(yts,'Mandy Patinkin page=1')
-    yts.search(yts,'Shekhar Kapur')
-    # yts.search(yts,'love page=5')
+    # yts.search(yts,'Shekhar Kapur')
+    # yts.search(yts,'love')
