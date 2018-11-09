@@ -140,8 +140,8 @@ class score(object):
 
     def done(self,res={}):
         if res:
-            print(res['name'])
-            # prettyPrinter(res)
+            # print(res['name'])
+            prettyPrinter(res)
         else:
             """ None """
 
