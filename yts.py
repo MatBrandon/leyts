@@ -1,10 +1,10 @@
-# VERSION: 3.5
-# AUTHORS: Khen Solomon Lethil (khensolomon@gmail.com)
+# VERSION: 3.6
+# AUTHORS: Khen Solomon Lethil
 import json, re, math
-try: # python3
+try:
     from urllib.parse import urlencode, unquote, quote_plus
     #from html.parser import HTMLParser
-except ImportError: # python2
+except ImportError:
     from urllib import urlencode, unquote, quote_plus
     #from HTMLParser import HTMLParser
 
@@ -18,13 +18,14 @@ class yts(object):
     supported_categories = {'all': 'All', 'movies': 'Movie'}
 
     def search(self, keyword, cat='all'):
-        job = scriptive()
+        job = score()
         params = job.paramBuilder(unquote(keyword))
-
         url = job.urlBuilder(self.url,['api', 'v2', 'list_movies.json'],params)
         data = retrieve_url(url)
         j = json.loads(data)
-        if j['data']['movie_count']:
+        # with open("assets/tmp.v2.json", "w") as f:
+        #     json.dump(j, f)
+        if j['data']['movie_count'] and 'movies' in j['data']:
             page_of = '{}of{}'.format(j['data']['page_number'],int(math.ceil(int(j['data']['movie_count']) / int(j['data']['limit']))))
             for movies in j['data']['movies']:
                 for torrent in movies['torrents']:
@@ -36,60 +37,55 @@ class yts(object):
                            'engine_url': 'IMDB:{rating}, [{genres}]'.format(rating=movies['rating'], genres=', '.join(movies['genres'])),
                            'desc_link': movies['url']}
                     job.done(res)
-        elif job.supported_browse_movies:
-            urlPath=job.supported_browse_params
-            for i in urlPath:
-                if i in params:
-                    urlPath[i]=params[i]
-            urlPath = list(urlPath.values())
-            urlPath.insert(0,job.supported_browse_movies)
-
-            url = job.urlBuilder(self.url,urlPath,'page' in params and {'page':params['page']})
+        elif job.supported_browse_params:
+            url_params = job.supported_browse_params
+            url_path = list(map(lambda i: i in params and params[i] or url_params[i], url_params))
+            url = job.urlBuilder(self.url,url_path,'page' in params and {'page':params['page']})
             data = retrieve_url(url)
             data = re.sub("\s\s+", "", data).replace('\n', '').replace('\r', '')
-
             data_container = re.findall('<div class="browse-content"><div class="container">.*?<section><div class="row">(.*?)</div></section>.*?</div></div>', data)
-            page_of = re.findall('<li class="pagination-bordered">(.*?)</li>', data)[0] # 1 of 5
-            page_of = page_of and re.sub(' +','',page_of).strip() or '?'
-
-            data_movie = re.findall('<div class=".?browse-movie-wrap.*?">.*?</div></div></div>', data_container[0])
-            for hM in data_movie:
-                movie_link = re.findall('<a href="(.*?)" class="browse-movie-link">.*?</a>', hM)[0]
-                response_detail = retrieve_url(movie_link)
-                response_detail = re.sub("\s\s+", "", response_detail).replace('\n', '').replace('\r', '')
-                movie_id = re.findall('data-movie-id="(\d+)"', response_detail)[0]
-                if movie_id:
-                    url = job.urlBuilder(self.url,['api', 'v2', 'movie_details.json'],{'movie_id':movie_id})
-                    data_detail = retrieve_url(url)
-                    j = json.loads(data_detail)
-                    movies = j['data']['movie']
-                    for torrent in movies['torrents']:
-                        res = {'link':job.magnetBuilder(torrent['hash'],movies['title']),
-                               'name': '{n} ({y}) [{q}]-[{p}]-[{i}]'.format(n=movies['title'], y=movies['year'], q=torrent['quality'], p=page_of,i=self.name[:-1]),
-                               'size': torrent['size'],
-                               'seeds': torrent['seeds'],
-                               'leech': torrent['peers'],
-                               'engine_url': 'IMDB:{rating}, [{genres}]'.format(rating=movies['rating'], genres=', '.join(movies['genres'])),
-                               'desc_link': movies['url']}
-                        job.done(res)
-                else:
-                    # TODO: ??
-                    movie_title = re.findall('<a.*?class="browse-movie-title".*?>(.*?)</a>', hM)[0]
-                    movie_year = re.findall('<div.?class="browse-movie-year".*?>(.*?)</div>', hM)[0]
-
-                    movie_rate = re.findall('<h4.?class="rating".*?>(.*?)</h4>', hM)[0]
-                    movie_rate = movie_rate.split('/')[0]
-
-                    movie_genre = re.findall('<figcaption class=".*?">.*?(<h4>.*</h4>).*?</figcaption>', hM)[0]
-                    movie_genre = re.findall('<h4>(.*?)</h4>', movie_genre)
-                    # print(movie_title,movie_link,movie_year,movie_rate,movie_genre)
-                    job.done()
+            if data_container and data_container[0]:
+                page_of = re.findall('<li class="pagination-bordered">(.*?)</li>', data)[0] # 1 of 5
+                page_of = page_of and re.sub(' +','',page_of).strip() or '?'
+                data_movie = re.findall('<div class=".?browse-movie-wrap.*?">.*?</div></div></div>', data_container[0])
+                for hM in data_movie:
+                    movie_link = re.findall('<a href="(.*?)" class="browse-movie-link">.*?</a>', hM)[0]
+                    response_detail = retrieve_url(movie_link)
+                    response_detail = re.sub("\s\s+", "", response_detail).replace('\n', '').replace('\r', '')
+                    movie_id = re.findall('data-movie-id="(\d+)"', response_detail)[0]
+                    if movie_id:
+                        url = job.urlBuilder(self.url,['api', 'v2', 'movie_details.json'],{'movie_id':movie_id})
+                        data_detail = retrieve_url(url)
+                        j = json.loads(data_detail)
+                        movies = j['data']['movie']
+                        for torrent in movies['torrents']:
+                            res = {'link':job.magnetBuilder(torrent['hash'],movies['title']),
+                            'name': '{n} ({y}) [{q}]-[{p}]-[{i}]'.format(n=movies['title'], y=movies['year'], q=torrent['quality'], p=page_of,i=self.name[:-1]),
+                            'size': torrent['size'],
+                            'seeds': torrent['seeds'],
+                            'leech': torrent['peers'],
+                            'engine_url': 'IMDB:{rating}, [{genres}]'.format(rating=movies['rating'], genres=', '.join(movies['genres'])),
+                            'desc_link': movies['url']}
+                            job.done(res)
+                        else:
+                            # TODO: ??
+                            movie_title = re.findall('<a.*?class="browse-movie-title".*?>(.*?)</a>', hM)[0]
+                            movie_year = re.findall('<div.?class="browse-movie-year".*?>(.*?)</div>', hM)[0]
+                            movie_rate = re.findall('<h4.?class="rating".*?>(.*?)</h4>', hM)[0]
+                            movie_rate = movie_rate.split('/')[0]
+                            movie_genre = re.findall('<figcaption class=".*?">.*?(<h4>.*</h4>).*?</figcaption>', hM)[0]
+                            movie_genre = re.findall('<h4>(.*?)</h4>', movie_genre)
+                            # print(movie_title,movie_link,movie_year,movie_rate,movie_genre)
+                            job.done()
+            else:
+                # NOTE: No match found
+                job.done()
         else:
+            # NOTE: not supported browsing
             job.done()
 
-class scriptive(object):
-    supported_browse_movies = 'browse-movies'
-    supported_browse_params = {'query_term':'0', 'quality':'all','genre':'all','minimum_rating':'0','sort_by':'latest'}
+class score(object):
+    supported_browse_params = {'browse':'browse-movies','query_term':'0', 'quality':'all','genre':'all','minimum_rating':'0','sort_by':'latest'}
     default_params = {
         'genre':{'x':'(term=\w+[\s+|$]?)'},
         'quality':{'x':'(term=\w+[\s+|$]?)'},
@@ -144,16 +140,10 @@ class scriptive(object):
 
     def done(self,res={}):
         if res:
-            # print(res['name'])
-            prettyPrinter(res)
+            print(res['name'])
+            # prettyPrinter(res)
         else:
             """ None """
 
 if __name__=="__main__":
     """ debug """
-    # Scarlett Johansson
-    # yts.search(yts,'love genre=Action quality=1080p sort_by=latest  order_by=desc with_rt_ratings=Yes page=2 limit=2')
-    yts.search(yts,'Scarlett Johansson page=2')
-    # yts.search(yts,'Mandy Patinkin page=1')
-    # yts.search(yts,'Shekhar Kapur')
-    # yts.search(yts,'love')
