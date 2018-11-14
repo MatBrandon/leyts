@@ -38,3 +38,44 @@
   <li><a href="/browse-movies?page=2">Next »</a></li>
   <li><a href="/browse-movies?page=463">Last »</a></li>
 </ul>
+
+def writeMeta(filename,meta,verbose=True):
+    '''Write ID3 metadata to audio file
+
+    <filename>: str, abspath to audio file.
+    <meta>: dict, metadata dict.
+
+    Write metadata into the .mp3 audio file using ID3
+
+    Update time: 2016-07-12 14:09:27.
+    '''
+
+    from mutagen.mp3 import MP3
+    from mutagen.mp4 import MP4, MP4Cover
+    from mutagen.id3 import ID3, APIC, error
+
+    audio=mutagen.File(filename)
+
+    #------------Add ID3 tag if not exists------------
+    try:
+        audio.add_tags()
+    except:
+        pass
+
+    for kk,vv in meta.items():
+        if kk=='cover':
+            #------------------For mp3 format------------------
+            #ap=APIC(encoding=3, mime=tools.deu(vv),type=3,\
+            #desc=u'Cover',data=open(vv,'rb').read())
+            #audio.tags.add(ap)
+
+            #------------------For mp4 format------------------
+            ap2=MP4Cover(open(vv,'rb').read(),\
+                imageformat=MP4Cover.FORMAT_JPEG)
+            audio['covr']=[ap2]
+        else:
+            audio[kk]=tools.deu(vv)
+
+    audio.save()
+
+    return

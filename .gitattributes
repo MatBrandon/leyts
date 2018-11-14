@@ -1,4 +1,5 @@
 /assets/ export-ignore
+/m3s/ export-ignore
 /test.* export-ignore
 /__*.py export-ignore
 /helpers.* export-ignore

@@ -1,4 +1,4 @@
-# VERSION: 3.6
+# VERSION: 3.7
 # AUTHORS: Khen Solomon Lethil
 import json, re, math
 try:
@@ -23,7 +23,7 @@ class yts(object):
         url = job.urlBuilder(self.url,['api', 'v2', 'list_movies.json'],params)
         data = retrieve_url(url)
         j = json.loads(data)
-        # with open("assets/tmp.v2.json", "w") as f:
+        # with open("assets/yts.v181109.json", "w") as f:
         #     json.dump(j, f)
         if j['data']['movie_count'] and 'movies' in j['data']:
             page_of = '{}of{}'.format(j['data']['page_number'],int(math.ceil(int(j['data']['movie_count']) / int(j['data']['limit']))))
