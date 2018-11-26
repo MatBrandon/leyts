@@ -12,7 +12,7 @@ setup(
     packages=[
     ],
     install_requires=[
-        'Pillow', 'mutagen','numpy'
+        'Pillow', 'mutagen','numpy','libtorrent'
     ],
     dependency_links=[
     ],

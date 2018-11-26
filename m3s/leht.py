@@ -110,9 +110,6 @@ class result(object):
 
     def album_list_scan(self,item_lang,item_type,item_start,item_end=0):
         # en,mm - S,C,V
-        # https://www.myanmarmp3.net/mm/Artists/Browse/12/zaw-win-htut/s?Albums-page=2
-        # https://www.myanmarmp3.net/mm/artists/browse/12/zaw-win-htut/C
-        # https://www.myanmarmp3.net/mm/artists/browse/12/zaw-win-htut/V
         # self.album_list_scan_by_artist = 12
         if self.album_list_scan_by_artist:
             url = 'https://www.{}.{}/{}/artists/browse/{}/a/{}?Albums-page={}'.format(self.domain_name,self.domain_extension,item_lang,self.album_list_scan_by_artist,item_type,item_start)
