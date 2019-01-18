@@ -1,4 +1,4 @@
-# leyts `v3.5`
+# leyts `v4.0`
 
 ## qBittorrent -> search plugin
 
