@@ -1,12 +1,12 @@
-# VERSION: 3.7
+# VERSION: 3.8
 # AUTHORS: Khen Solomon Lethil
 import json, re, math
 try:
     from urllib.parse import urlencode, unquote, quote_plus
-    #from html.parser import HTMLParser
+    from html.parser import HTMLParser
 except ImportError:
     from urllib import urlencode, unquote, quote_plus
-    #from HTMLParser import HTMLParser
+    from HTMLParser import HTMLParser
 
 # local
 from novaprinter import prettyPrinter
