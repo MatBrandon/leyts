@@ -42,3 +42,9 @@ love genre=Action quality=1080p minimum_rating=2 sort_by=latest order_by=desc wi
   "with_rt_ratings": "Boolean	false	Returns the list with the Rotten Tomatoes rating included"
 }
 ```
+
+> hack: Advanced search on python2.x `#!/usr/bin/env python3`
+in your terminal
+```
+alias python=python3.x
+```

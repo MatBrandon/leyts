@@ -1,4 +1,6 @@
-# VERSION: 3.8
+#!/usr/bin/env python3
+
+# VERSION: 3.9
 # AUTHORS: Khen Solomon Lethil
 import json, re, math
 try:
