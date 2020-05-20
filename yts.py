@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# VERSION: 4.2
+# VERSION: 4.3
 # AUTHORS: Khen Solomon Lethil
 import json, re, math
 try:
@@ -14,7 +14,7 @@ from novaprinter import prettyPrinter
 from helpers import retrieve_url
 
 class yts(object):
-    url = 'https://yts.am'
+    url = 'https://yts.mx'
     name = 'YTS'
     supported_categories = {'all': 'All', 'movies': 'Movie'}
 
