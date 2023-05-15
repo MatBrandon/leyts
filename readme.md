@@ -6,7 +6,7 @@
 Insert this url in `Search plugins` -> `install a new one` -> `web link`
 
 ```
-https://raw.githubusercontent.com/khensolomon/leyts/master/yts.py
+https://raw.githubusercontent.com/MatBrandon/leyts/master/yts.py
 ```
 
 # How do I search?
